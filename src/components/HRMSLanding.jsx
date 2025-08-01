@@ -1,4 +1,6 @@
 import { FaHome, FaBuilding, FaRupeeSign, FaBriefcase, FaChartLine, FaUserTie, FaStar } from "react-icons/fa";
+import { useState, useEffect } from 'react';
+import axios from '../api/axios';
 
 import careerVector from "../assets/career.png"; // Your vector image
 
@@ -40,6 +42,26 @@ const sponsoredCompanies = [
 ];
 
 export default function HRMSLanding() {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const response = await axios.get('api/job/list');
+        setJobs(response.data);
+        console.log(response.data);
+
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load jobs');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
   return (
     <section className="bg-light py-12">
       <div className="max-w-7xl mx-auto px-4 space-y-16">

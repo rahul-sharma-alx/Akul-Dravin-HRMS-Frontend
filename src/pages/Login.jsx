@@ -1,32 +1,18 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from '../api/axios';
 
 export default function Login() {
-  const [credentials, setCredentials] = useState({ 
-    email: '', 
-    password: '' 
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { setUser } = useAuth(); // If using context
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setCredentials(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!credentials.email) newErrors.email = 'Email is required';
-    if (!credentials.password) newErrors.password = 'Password is required';
+    if (!email) newErrors.email = 'Email is required';
+    if (!password) newErrors.password = 'Password is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -34,31 +20,33 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-
+    
     setIsLoading(true);
-    try {
-      // Get CSRF cookie first
-      await api.get('/sanctum/csrf-cookie');
+    setErrors({});
 
-      // Login request
-      const { data } = await api.post('/login', credentials);
-      console.log("Login response:", data);
+    try {
+      // First get CSRF cookie
+      await axios.get('/sanctum/csrf-cookie');
+
+      // Then login
+      const response = await axios.post('api/login', {
+        email,
+        password
+      });
+
+      // Store token and user data
+      localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      
-      // Store user data (adjust based on your API response)
-      localStorage.setItem('authToken', data.token);
-      if (setUser) setUser(data.user);
-      
-      // Redirect to dashboard or intended page
+      // Redirect to dashboard
       navigate('/dashboard');
       
     } catch (err) {
-      const errorData = err.response?.data?.errors || err.response?.data?.message;
-      if (errorData) {
-        setErrors(prev => ({
-          ...prev,
-          ...(typeof errorData === 'object' ? errorData : { form: errorData })
-        }));
+      console.error('Login error:', err);
+      if (err.response?.status === 401) {
+        setErrors({ form: 'Invalid email or password' });
+      } else if (err.response?.status === 419) {
+        setErrors({ form: 'Session expired. Please refresh the page.' });
       } else {
         setErrors({ form: 'Login failed. Please try again.' });
       }
@@ -67,12 +55,13 @@ export default function Login() {
     }
   };
 
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-light">
       {/* Illustration */}
       <div className="md:w-1/2 hidden md:flex justify-center items-center bg-gray-50">
         <img
-          src={login}
+          src='null'
           alt="HRMS Login"
           className="w-[90%] max-w-lg"
           loading="lazy"
@@ -109,8 +98,7 @@ export default function Login() {
                 id="email"
                 type="email"
                 name="email"
-                value={credentials.email}
-                onChange={handleChange}
+                value={email} onChange={(e) => setEmail(e.target.value)}
                 className={`w-full border-b ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-blue-600 bg-transparent py-2 px-1`}
                 placeholder="Enter your email"
                 autoComplete="email"
@@ -128,8 +116,7 @@ export default function Login() {
                 id="password"
                 type="password"
                 name="password"
-                value={credentials.password}
-                onChange={handleChange}
+                value={password} onChange={(e) => setPassword(e.target.value)}
                 className={`w-full border-b ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-blue-600 bg-transparent py-2 px-1`}
                 placeholder="Enter your password"
                 autoComplete="current-password"
