@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Footer from "./components/Footer";
@@ -10,6 +10,8 @@ import Register from "./pages/Register";
 // import Trail from "./pages/Trial";
 import Trial from "./pages/Trial";
 import HirePage from "./pages/Hirepage";
+import JobApplication from "./pages/JobApplication";
+import ApplicationSuccess from "./pages/ApplicationSuccess";
 // import Features from "./pages/Features";
 // import Pricing from "./pages/Pricing";
 // import About from "./pages/About";
@@ -18,7 +20,7 @@ import HirePage from "./pages/Hirepage";
 
 export default function App() {
   return (
-    <Router>
+    <>
       <Navbar />
       <div className="pt-20"> {/* To avoid navbar overlap */}
         <Routes>
@@ -30,6 +32,8 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/trial" element={<Trial />} />
           <Route path="/hire" element={<HirePage />} />
+          <Route path="/apply/:jobId" element={<JobApplication />} />
+          <Route path="/application-success" element={<ApplicationSuccess/>}/>
           {/* <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
@@ -38,6 +42,6 @@ export default function App() {
         </Routes>
       </div>
       <Footer/>
-    </Router>
+    </>
   );
 }

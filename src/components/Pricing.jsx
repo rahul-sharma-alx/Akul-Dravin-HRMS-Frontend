@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
-
+import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from 'react-router-dom';
 const plans = [
   {
+    id: "starter",
     name: "Starter",
     price: "₹999 / Month",
     employees: "Up to 10 Employees",
@@ -13,6 +15,7 @@ const plans = [
     ],
   },
   {
+    id: "growth",
     name: "Growth",
     price: "₹2,999 / Month",
     employees: "Up to 100 Employees",
@@ -24,6 +27,7 @@ const plans = [
     ],
   },
   {
+    id: "enterprise",
     name: "Enterprise",
     price: "₹5,999 / Month",
     employees: "Unlimited Employees",
@@ -35,6 +39,7 @@ const plans = [
     ],
   },
   {
+    id: "lifetime",
     name: "Lifetime Deal",
     price: "₹2,50,000 (One-Time)",
     employees: "Unlimited Employees",
@@ -49,6 +54,40 @@ const plans = [
 ];
 
 export default function Pricing() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const handlePricingpage = ()=>{
+    navigate('/trial');
+  }
+  const handleGetStarted = async (planId, planName, price) => {
+    try {
+      if (!user) {
+        // Redirect to login with return URL
+        window.location.href = `/login?returnTo=${encodeURIComponent('/pricing')}`;
+        return;
+      }
+
+      // Start checkout process
+      const response = await axios.post('/api/subscriptions/checkout', {
+        plan: planId
+      });
+
+      // Here you would typically redirect to payment gateway
+      // For this example, we'll proceed directly to subscription
+      const subscribeResponse = await axios.post('/api/subscriptions/start-trial', {
+        plan: planId,
+        price: price
+      });
+
+      // Redirect to dashboard or payment success page
+      window.location.href = '/dashboard?subscription=success';
+    } catch (error) {
+      console.error('Subscription error:', error);
+      alert(error.response?.data?.message || 'Failed to start subscription');
+    }
+  };
+
+
   return (
     <section id="pricing" className="py-20 bg-light">
       <div className="max-w-7xl mx-auto px-4">
@@ -65,9 +104,8 @@ export default function Pricing() {
           {plans.map((p, i) => (
             <motion.div
               key={i}
-              className={`flex flex-col justify-between rounded-2xl p-8 shadow-md hover:shadow-xl transition transform hover:-translate-y-1 bg-white border ${
-                p.highlight ? "border-secondary bg-light" : "border-gray-200"
-              }`}
+              className={`flex flex-col justify-between rounded-2xl p-8 shadow-md hover:shadow-xl transition transform hover:-translate-y-1 bg-white border ${p.highlight ? "border-secondary bg-light" : "border-gray-200"
+                }`}
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.2, duration: 0.6 }}
@@ -99,12 +137,11 @@ export default function Pricing() {
               </div>
 
               {/* CTA Button - always aligned at bottom */}
-              <a
-                href="#trial"
+              <button type="button" onClick={handlePricingpage}
                 className="block mt-auto bg-secondary text-dark text-center py-3 rounded-md font-medium hover:bg-primary hover:text-white transition"
               >
                 Get Started
-              </a>
+              </button>
             </motion.div>
           ))}
         </div>
